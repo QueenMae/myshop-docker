@@ -1,0 +1,48 @@
+services:
+  backend:
+    build: .
+    ports:
+      - "4000:4000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - APP_ENV=development
+      - MYSQL_HOST=mysql
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=root123
+      - MYSQL_DB=myshop
+      - JWT_SECRET=votre_clé_secrète
+    depends_on:
+      mysql:
+        condition: service_healthy
+    command: npm start
+    networks:
+      - app-network
+
+  mysql:
+    image: mysql:8
+    platform: linux/amd64
+    environment:
+      - MYSQL_ROOT_PASSWORD=root123
+      - MYSQL_DATABASE=myshop
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+volumes:
+  mysql-data:
+    driver: local
+
+networks:
+  app-network:
+    driver: bridge
